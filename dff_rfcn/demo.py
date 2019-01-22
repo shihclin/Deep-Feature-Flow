@@ -61,13 +61,15 @@ def main():
                'whale', 'zebra']
 
     # load demo data
-    image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
+    #image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
+    image_names = glob.glob('/home/shihclin/Datasets/TRACK_KITTI/testing/image_02/0000/*.png')
+    #image_names = glob.glob(cur_path + '/home/shihclin/Datasets/vot2015/car1/*.jpg')
+   
+    image_names.sort()
     output_dir = cur_path + '/../demo/rfcn_dff/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     key_frame_interval = 10
-
-    #
 
     data = []
     key_im_tensor = None
@@ -154,7 +156,9 @@ def main():
         # show_boxes(im, dets_nms, classes, 1)
         out_im = draw_boxes(im, dets_nms, classes, 1)
         _, filename = os.path.split(im_name)
-        cv2.imwrite(output_dir + filename,out_im)
+        #cv2.imwrite(output_dir + filename,out_im)
+        cv2.imshow('Detection Result', out_im)
+        cv2.waitKey(1)
 
     print 'done'
 
