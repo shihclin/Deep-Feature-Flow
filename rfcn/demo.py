@@ -60,8 +60,9 @@ def main():
                'whale', 'zebra']
 
     # load demo data
+    image_names = glob.glob('/home/shihclin/Datasets/UMTRI_test/01/*.jpg')
     #image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
-    image_names = glob.glob('/home/shihclin/Datasets/TRACK_KITTI/testing/image_02/0000/*.png')
+    #image_names = glob.glob('/home/shihclin/Datasets/TRACK_KITTI/testing/image_02/0000/*.png')
     image_names.sort()
     output_dir = cur_path + '/../demo/rfcn/'
     if not os.path.exists(output_dir):
@@ -116,7 +117,7 @@ def main():
         scores, boxes, data_dict = im_detect(predictor, data_batch, data_names, scales, config)
         time += toc()
         count += 1
-        print 'testing {} {:.4f}s'.format(im_name, time/count)
+        print 'testing {} {:.1f} ms'.format(im_name[-10:-5], time/count*1000)
 
         boxes = boxes[0].astype('f')
         scores = scores[0].astype('f')
@@ -140,7 +141,7 @@ def main():
         cv2.imshow('Detection Result', out_im)
         cv2.waitKey(1)
 
-    print 'done'
+    print 'done, {:.2f} fps'.format(count/time)
 
 if __name__ == '__main__':
     main()

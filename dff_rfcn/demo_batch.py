@@ -60,7 +60,8 @@ def main():
                'whale', 'zebra']
 
     # load demo data
-    image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
+    image_names = glob.glob('/home/shihclin/Datasets/UMTRI_test/01/*.jpg')
+    #image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
     image_names.sort()
     output_dir = cur_path + '/../demo/rfcn_dff_batch/'
     if not os.path.exists(output_dir):
@@ -134,7 +135,8 @@ def main():
         scores_all, boxes_all, data_dict = im_batch_detect(predictor, data_batch, data_names, scales, config)
         time += toc()
         count += len(scores_all)
-        print 'testing {} {:.4f}s x {:d}'.format(im_names[0], time/count, len(scores_all))
+        #print 'testing {} {:.4f}s x {:d}'.format(im_names[0], time/count, len(scores_all))
+        print 'testing {} {:.1f} ms'.format(im_name[-10:-5], time/count*1000)
 
         for batch_idx in xrange(len(scores_all)):
             boxes = boxes_all[batch_idx].astype('f')
@@ -154,10 +156,13 @@ def main():
             # show_boxes(im, dets_nms, classes, 1)
             out_im = draw_boxes(im, dets_nms, classes, 1)
             _, filename = os.path.split(im_names[batch_idx])
-            cv2.imwrite(output_dir + filename,out_im)
+            #cv2.imwrite(output_dir + filename,out_im)
+
+            cv2.imshow('Detection Result', out_im)
+            cv2.waitKey(1)
 
 
-    print 'done'
+    print 'done, {:.2f} fps'.format(count/time)
 
 if __name__ == '__main__':
     main()
