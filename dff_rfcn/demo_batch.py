@@ -1,4 +1,4 @@
-# --------------------------------------------------------
+# -------------------------/-------------------------------
 # Deep Feature Flow
 # Copyright (c) 2017 Microsoft
 # Licensed under The MIT License [see LICENSE for details]
@@ -17,6 +17,7 @@ import cv2
 from config.config import config, update_config
 from utils.image import resize, transform
 import numpy as np
+import csv
 # get config
 os.environ['PYTHONUNBUFFERED'] = '1'
 os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
@@ -33,12 +34,32 @@ from utils.show_boxes import show_boxes, draw_boxes
 from utils.tictoc import tic, toc
 from nms.nms import py_nms_wrapper, cpu_nms_wrapper, gpu_nms_wrapper
 
+def generateCSV(objList, outputPath):
+    with open (outputPath, 'wb') as csvfile:
+        filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        for obj in objList:
+            filewriter.writerow([item for item in obj])
+
+def collectDetection(idx, dets, classes, procLat, objList):
+    for cls_idx, cls_name in enumerate(classes):
+        cls_dets = dets[cls_idx]
+        for det in cls_dets:
+            bbox = det[:4]
+            bbox = map(int, bbox)
+            score = round(det[-1],3)
+            if cls_dets.shape[1] == 5:
+                objList.append([idx, cls_name, score, bbox[0], bbox[1], bbox[2], bbox[3], procLat])
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Show Deep Feature Flow demo')
     args = parser.parse_args()
     return args
 
-args = parse_args()
+#args = parse_args()
+
+# Usage: python demo_batch.py [input image folder] [output csv folder and file name]
+# example: python demo_batch.py ../demo/ILSVRC2015_val_00007010 ../csv_shihclin.csv
 
 def main():
     # get symbol
@@ -59,16 +80,21 @@ def main():
                'tiger', 'train', 'turtle', 'watercraft',
                'whale', 'zebra']
 
+
     # load demo data
-    image_names = glob.glob('/home/shihclin/Datasets/UMTRI_test/01/*.jpg')
+    #image_names = glob.glob('/home/shihclin/Datasets/UMTRI_test/01/*.jpg')
     #image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
+    image_names = glob.glob(cur_path + '/' + sys.argv[1] + '/*.JPEG')
+    csv_output_path = sys.argv[2]
+
     image_names.sort()
     output_dir = cur_path + '/../demo/rfcn_dff_batch/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     key_frame_interval = 10
 
-    #
+    # ObjList for csv output
+    objList = []
 
     data = []
     key_im_tensor = None
@@ -135,8 +161,8 @@ def main():
         scores_all, boxes_all, data_dict = im_batch_detect(predictor, data_batch, data_names, scales, config)
         time += toc()
         count += len(scores_all)
-        #print 'testing {} {:.4f}s x {:d}'.format(im_names[0], time/count, len(scores_all))
-        print 'testing {} {:.1f} ms'.format(im_name[-10:-5], time/count*1000)
+        latency = round(time/count*1000, 3)
+        print 'testing #{} batch {:.1f} ms'.format(idx, latency)
 
         for batch_idx in xrange(len(scores_all)):
             boxes = boxes_all[batch_idx].astype('f')
@@ -150,18 +176,22 @@ def main():
                 cls_dets = cls_dets[keep, :]
                 cls_dets = cls_dets[cls_dets[:, -1] > 0.7, :]
                 dets_nms.append(cls_dets)
+            
+            frame_id = idx*10+batch_idx
+            collectDetection(frame_id, dets_nms, classes, latency, objList)
+                
+           
             # visualize
             im = cv2.imread(im_names[batch_idx])
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
             # show_boxes(im, dets_nms, classes, 1)
             out_im = draw_boxes(im, dets_nms, classes, 1)
-            _, filename = os.path.split(im_names[batch_idx])
+            _, filename = os.path.split(im_names[batch_idx])       
             #cv2.imwrite(output_dir + filename,out_im)
-
-            cv2.imshow('Detection Result', out_im)
-            cv2.waitKey(1)
-
-
+            #cv2.imshow('Detection Result', out_im)
+            #cv2.waitKey(1)
+    
+    generateCSV(objList, csv_output_path)
     print 'done, {:.2f} fps'.format(count/time)
 
 if __name__ == '__main__':
