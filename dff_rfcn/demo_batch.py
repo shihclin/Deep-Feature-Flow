@@ -58,8 +58,8 @@ def parse_args():
 
 #args = parse_args()
 
-# Usage: python demo_batch.py [input image folder] [output csv folder and file name]
-# example: python demo_batch.py ../demo/ILSVRC2015_val_00007010 ../csv_shihclin.csv
+# Usage: python demo_batch.py [key_frame_interval] [input image folder] [output csv folder and file name]
+# example: python demo_batch.py 10 ../demo/ILSVRC2015_val_00007010 ../csv_shihclin.csv
 
 def main():
     # get symbol
@@ -84,14 +84,15 @@ def main():
     # load demo data
     #image_names = glob.glob('/home/shihclin/Datasets/UMTRI_test/01/*.jpg')
     #image_names = glob.glob(cur_path + '/../demo/ILSVRC2015_val_00007010/*.JPEG')
-    image_names = glob.glob(cur_path + '/' + sys.argv[1] + '/*.JPEG')
-    csv_output_path = sys.argv[2]
+    
+    image_names = glob.glob(cur_path + '/' + sys.argv[2] + '/*.JPEG')
+    csv_output_path = sys.argv[3]
+    key_frame_interval = int(sys.argv[1])
 
     image_names.sort()
     output_dir = cur_path + '/../demo/rfcn_dff_batch/'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    key_frame_interval = 10
 
     # ObjList for csv output
     objList = []
